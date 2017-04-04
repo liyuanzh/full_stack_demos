@@ -1,5 +1,7 @@
 /*
-  线性队列法
+  这个案例开始，我们有一个新的方法去减慢爬取的速度，我们让爬虫排队
+  逻辑主要在query函数里，query函数可以自己调用自己，通过这个方法去进行串行执行，当爬完的时候自动退出
+  query函数的done函数不重要，只是在所有任务完成的时候进行退出，你把done函数去掉，这个程序也可以正常执行
 */
 
 var request = require('request');
@@ -31,18 +33,18 @@ function getURL(keyword) {
 var data, list, d, obj, result = [];
 var spiderIndex = 0, spiderSuccessIndex = 0;
 var queryN = keywords.length;
-function query(next) {
+function query(done) {
   var keyword = keywords[spiderIndex];
   var url = getURL(keyword);
   spiderIndex++;
-  if(spiderIndex >= queryN) return next();
+  if(spiderIndex >= queryN) return done();
   request.get(url, function(e, res, body) {
     if (!e && res.statusCode == 200) {
       body = JSON.parse(body);
       data = body.data;
-      if(!data || !data[0]) return query(next);
+      if(!data || !data[0]) return query(done);
       list = data[0].list;
-      if(!list || !list[0]) return query(next);
+      if(!list || !list[0]) return query(done);
       //
       d = list[0];
       obj = {
@@ -57,10 +59,10 @@ function query(next) {
       console.log(spiderSuccessIndex + '/' + spiderIndex + '|' + queryN);
       result.push(obj);
       save(result);
-      return query(next);
+      return query(done);
     } else {
       console.log('错误');
-      return query(next);
+      return query(done);
     }
   });
 }
